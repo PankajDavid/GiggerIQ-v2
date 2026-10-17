@@ -50,11 +50,35 @@ export function listen(lang: Lang, onText: (text: string) => void, onEnd: () => 
   return rec;
 }
 
+/**
+ * Find an installed voice for this language. Without one the browser falls back to
+ * an English voice that skips Devanagari/Gurmukhi text, so we hide Read aloud instead.
+ */
+export function voiceFor(lang: Lang): SpeechSynthesisVoice | null {
+  if (!canSpeak()) return null;
+  const prefix = SPEECH_LOCALE[lang].split("-")[0].toLowerCase();
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((v) => v.lang.toLowerCase().replace("_", "-") === SPEECH_LOCALE[lang].toLowerCase()) ??
+    voices.find((v) => v.lang.toLowerCase().startsWith(prefix)) ??
+    null
+  );
+}
+
+/** Calls back whenever the browser's voice list loads or changes (it loads asynchronously). */
+export function onVoicesChanged(callback: () => void): () => void {
+  if (!canSpeak()) return () => {};
+  window.speechSynthesis.addEventListener("voiceschanged", callback);
+  return () => window.speechSynthesis.removeEventListener("voiceschanged", callback);
+}
+
 export function speak(text: string, lang: Lang, onEnd: () => void) {
-  if (!canSpeak()) return;
+  const voice = voiceFor(lang);
+  if (!voice) return onEnd();
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = SPEECH_LOCALE[lang];
+  utterance.voice = voice;
+  utterance.lang = voice.lang;
   utterance.onend = onEnd;
   utterance.onerror = onEnd;
   window.speechSynthesis.speak(utterance);

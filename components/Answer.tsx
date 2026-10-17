@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { T } from "@/lib/i18n";
 import type { Lang } from "@/lib/validation";
 import type { AskResult } from "@/lib/client";
-import { canSpeak, speak, stopSpeaking, whatsappLink } from "@/lib/speech";
+import { onVoicesChanged, speak, stopSpeaking, voiceFor, whatsappLink } from "@/lib/speech";
 
 interface Props {
   result: AskResult | null;
@@ -18,7 +18,12 @@ export function Answer({ result, lang, onDraftReply }: Props) {
   const [speaking, setSpeaking] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
 
-  useEffect(() => setSpeechSupported(canSpeak()), []);
+  // Only offer Read aloud when the device has a voice for the chosen language.
+  useEffect(() => {
+    const check = () => setSpeechSupported(voiceFor(lang) !== null);
+    check();
+    return onVoicesChanged(check);
+  }, [lang]);
   useEffect(() => () => stopSpeaking(), [result]);
 
   if (!result) return null;
