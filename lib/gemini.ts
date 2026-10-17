@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 // Try the configured model first, then stable fallbacks in case a model ID is retired.
 const MODELS = [
-  ...new Set([process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash"].filter(Boolean)),
+  ...new Set([process.env.GEMINI_MODEL, "gemini-3.8-flash", "gemini-flash-latest"].filter(Boolean)),
 ] as string[];
 const TIMEOUT_MS = 25_000;
 

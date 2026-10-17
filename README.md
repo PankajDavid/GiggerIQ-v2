@@ -16,7 +16,7 @@ All features work in **English, Hindi and Punjabi**: interface, AI replies and s
 
 ## Generative AI used, and where
 
-- **Google Gemini (Flash) via the official `@google/genai` SDK**, called only on the server through one shared helper, `lib/gemini.ts`.
+- **Google Gemini 3.8 Flash via the official `@google/genai` SDK**, called only on the server through one shared helper, `lib/gemini.ts`.
 - Used by all five features. Gemini's vision capability reads uploaded document photos.
 - Prompts for every feature live in `lib/prompts.ts`; the request lifecycle lives in `lib/askService.ts`.
 
