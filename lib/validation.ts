@@ -4,7 +4,7 @@ import { earningsListSchema } from "./earnings";
 export const MODES = ["complaint", "safety", "schemes", "document", "earnings"] as const;
 export type Mode = (typeof MODES)[number];
 
-export const LANGS = ["en", "hi"] as const;
+export const LANGS = ["en", "hi", "pa"] as const;
 export type Lang = (typeof LANGS)[number];
 
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;

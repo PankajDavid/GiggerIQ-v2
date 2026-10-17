@@ -5,6 +5,7 @@ import { computeTotals } from "./earnings";
 const LANGUAGE: Record<Lang, string> = {
   en: "simple English",
   hi: "simple Hindi (Devanagari script)",
+  pa: "simple Punjabi (Gurmukhi script)",
 };
 
 const BASE = (lang: Lang) =>

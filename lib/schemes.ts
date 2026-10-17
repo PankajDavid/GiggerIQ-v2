@@ -12,11 +12,24 @@ export interface Scheme {
 export const SCHEMES: Scheme[] = schemesData;
 const MAX_MATCHES = 3;
 
-/** Server-side retrieval: pick the most relevant schemes by keyword overlap. */
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * English keywords match whole words only ("id" must not match "accident").
+ * Hindi/Punjabi keywords match as substrings, since \b does not work for those scripts.
+ */
+function keywordMatches(question: string, keyword: string): boolean {
+  if (/^[\x00-\x7F]+$/.test(keyword)) {
+    return new RegExp(`\\b${escapeRegex(keyword)}(s|es)?\\b`, "i").test(question);
+  }
+  return question.includes(keyword);
+}
+
+/** Server-side retrieval: pick the most relevant schemes by keyword overlap (English, Hindi, Punjabi). */
 export function selectSchemes(question: string, schemes: Scheme[] = SCHEMES): Scheme[] {
   const q = question.toLowerCase();
   return schemes
-    .map((s) => ({ s, score: s.keywords.filter((k) => q.includes(k)).length }))
+    .map((s) => ({ s, score: s.keywords.filter((k) => keywordMatches(q, k.toLowerCase())).length }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_MATCHES)

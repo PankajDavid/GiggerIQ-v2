@@ -1,16 +1,13 @@
 # HANDOFF
 
-## Done
-- Earnings tracking (localStorage, zod-validated read/write) + AI summary
-- Ask GiggerIQ: complaint letter, safety tips, grounded welfare schemes, document photo explanation
-- English / Hindi
-- Security controls listed in README
-- 8 Vitest tests passing; production build passing
+## Done (main challenge)
+- Frontend split into components (AskTab, EarningsTab, Answer) + useEarnings hook + client helpers
+- Request lifecycle extracted to lib/askService.ts; route is a thin HTTP layer
+- Redis-backed store for rate limits and cache, memory fallback; fail-closed limits
+- Answer cache for safety/schemes (hashed keys, 6h TTL); personal modes never cached
+- In-browser image shrinking before upload
+- Punjabi added; Hindi/Punjabi scheme keywords; whole-word English matching
+- 25 tests (13 API integration tests)
 
 ## Next
-- Deploy to Railway, set GEMINI_API_KEY, test every feature on the live URL
-- Optional: Punjabi
-
-## Known issues
-- In-memory rate limits reset on restart
-- No separate image dimension check
+- Deploy with Redis on Railway, test all features live

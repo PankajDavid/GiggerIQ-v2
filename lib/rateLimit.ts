@@ -1,31 +1,36 @@
-const WINDOW_MS = 60_000;
+import { getStore } from "./store";
+
 const PER_IP_PER_MINUTE = 10;
 const DAILY_AI_CAP = Number(process.env.DAILY_AI_CAP ?? 200);
+const DAY_SECONDS = 86_400;
 
-const hits = new Map<string, number[]>();
-let dailyCount = 0;
-let dailyDate = new Date().toISOString().slice(0, 10);
+export type LimitResult = "ok" | "too_many" | "daily_cap" | "unavailable";
 
-export type LimitResult = "ok" | "too_many" | "daily_cap";
+const minuteBucket = (now: number) => Math.floor(now / 60_000);
+const dayBucket = (now: number) => new Date(now).toISOString().slice(0, 10);
 
-/** In-memory limiter for a single Railway instance. Fails closed on the daily cap. */
-export function checkLimit(ip: string, now = Date.now()): LimitResult {
-  const today = new Date(now).toISOString().slice(0, 10);
-  if (today !== dailyDate) {
-    dailyDate = today;
-    dailyCount = 0;
+/**
+ * Per-IP limit: 10 requests per minute (fixed window).
+ * Fails closed: if the store is unreachable, the request is refused.
+ */
+export async function checkIpLimit(ip: string, now = Date.now()): Promise<LimitResult> {
+  try {
+    const count = await getStore().incr(`rl:ip:${ip}:${minuteBucket(now)}`, 60);
+    return count > PER_IP_PER_MINUTE ? "too_many" : "ok";
+  } catch {
+    return "unavailable";
   }
-  if (dailyCount >= DAILY_AI_CAP) return "daily_cap";
+}
 
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= PER_IP_PER_MINUTE) {
-    hits.set(ip, recent);
-    return "too_many";
+/**
+ * Reserve one paid Gemini call against the daily cap. Only called on cache misses.
+ * Fails closed so a store outage can never allow unlimited paid calls.
+ */
+export async function reserveAiCall(now = Date.now()): Promise<LimitResult> {
+  try {
+    const count = await getStore().incr(`rl:ai:${dayBucket(now)}`, DAY_SECONDS);
+    return count > DAILY_AI_CAP ? "daily_cap" : "ok";
+  } catch {
+    return "unavailable";
   }
-  recent.push(now);
-  hits.set(ip, recent);
-  dailyCount += 1;
-
-  if (hits.size > 10_000) hits.clear(); // bound memory
-  return "ok";
 }

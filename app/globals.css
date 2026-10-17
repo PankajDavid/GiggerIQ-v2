@@ -56,3 +56,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
 .muted { color: var(--muted); font-size: 0.9rem; }
 .error { color: var(--error); font-weight: 600; }
 .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+fieldset.plain { border: 0; padding: 0; margin: 0; }
+label.inline { margin: 0; }
+.entries { list-style: none; padding: 0; margin: 12px 0 0; }
+.row.tight { margin-top: 0; }
