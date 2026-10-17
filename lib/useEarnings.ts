@@ -50,8 +50,16 @@ export function useEarnings() {
     return null;
   };
 
+  /** Add entries extracted from a screenshot (already validated on the server). Returns how many were added. */
+  const addMany = (incoming: Earning[]): number => {
+    const room = Math.max(0, MAX_ENTRIES - entries.length);
+    const valid = incoming.filter((e) => earningSchema.safeParse(e).success).slice(0, room);
+    if (valid.length) persist([...entries, ...valid]);
+    return valid.length;
+  };
+
   const remove = (id: string) => persist(entries.filter((e) => e.id !== id));
   const totals = useMemo(() => computeTotals(entries), [entries]);
 
-  return { entries, totals, save, remove };
+  return { entries, totals, save, addMany, remove };
 }

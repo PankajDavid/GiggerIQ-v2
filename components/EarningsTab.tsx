@@ -7,13 +7,14 @@ import type { Earning } from "@/lib/earnings";
 import { useEarnings, type EarningInput } from "@/lib/useEarnings";
 import { askGiggerIQ, type AskResult } from "@/lib/client";
 import { Answer } from "./Answer";
+import { ScreenshotImport } from "./ScreenshotImport";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyForm = (): EarningInput => ({ date: today(), platform: "", amount: "", hours: "" });
 
 export function EarningsTab({ lang }: { lang: Lang }) {
   const t = T[lang];
-  const { entries, totals, save, remove } = useEarnings();
+  const { entries, totals, save, addMany, remove } = useEarnings();
   const [form, setForm] = useState<EarningInput>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -52,6 +53,7 @@ export function EarningsTab({ lang }: { lang: Lang }) {
 
   return (
     <>
+      <ScreenshotImport lang={lang} onConfirm={addMany} />
       <form className="card" onSubmit={submit} noValidate>
         <label htmlFor="date">{t.date}</label>
         <input type="date" {...field("date")} />

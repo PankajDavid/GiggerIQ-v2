@@ -20,7 +20,17 @@ export interface GeminiImage {
 }
 
 /** Single shared Gemini call used by every AI feature. Server-side only. */
-export async function generate(system: string, user: string, image?: GeminiImage): Promise<string> {
+export interface GenerateOptions {
+  /** Ask Gemini for a JSON response (used for screenshot extraction). */
+  json?: boolean;
+}
+
+export async function generate(
+  system: string,
+  user: string,
+  image?: GeminiImage,
+  options: GenerateOptions = {},
+): Promise<string> {
   const parts: Array<Record<string, unknown>> = [{ text: user }];
   if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
 
@@ -30,7 +40,12 @@ export async function generate(system: string, user: string, image?: GeminiImage
       const call = getClient().models.generateContent({
         model,
         contents: [{ role: "user", parts }],
-        config: { systemInstruction: system, temperature: 0.3, maxOutputTokens: 2048 },
+        config: {
+          systemInstruction: system,
+          temperature: options.json ? 0 : 0.3,
+          maxOutputTokens: 2048,
+          ...(options.json ? { responseMimeType: "application/json" } : {}),
+        },
       });
       const timeout = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("timeout")), TIMEOUT_MS),

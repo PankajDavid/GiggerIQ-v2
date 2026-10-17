@@ -6,18 +6,21 @@ A mobile-first GenAI companion for Indian gig and informal workers: delivery par
 
 | Feature | How it works |
 |---|---|
+| **Earnings from a screenshot** | The worker uploads a screenshot of their earnings screen from any gig app. Gemini reads it and returns structured entries (JSON), which the server validates against the same schema as manual entry. The worker reviews them and confirms before anything is saved. No platform API or scraping is needed. |
 | **My Earnings** | Manual entry of date, platform, amount and hours. Shows total earned, total hours and per-hour rate, with edit and delete. **AI summary** explains the week and gives practical tips. |
 | **Complaint letter** | The worker describes a problem (unpaid payout, unfair deactivation, COD dispute). AI drafts a formal, editable letter with a copy button, labelled as informational, not legal advice. |
 | **Safety tips** | The worker describes their work situation. AI gives practical safety advice, including emergency number 112. |
 | **Welfare schemes** | Grounded answers about real government schemes (e-Shram, PM-SYM, Ayushman Bharat PM-JAY, PMSBY, PMJJBY, APY, PM SVANidhi) with official links. |
 | **Explain a document** | The worker photographs a notice, letter or form. AI explains what it says, key dates, amounts and what to do next. |
 
+**Connected workflows:** after a notice is explained, **"Draft my reply"** turns it into an appeal letter in one tap. Every answer can be **shared on WhatsApp**, copied, or **read aloud**, and questions can be **spoken** with the microphone button (browser speech APIs in en-IN, hi-IN and pa-IN), for workers who find reading or typing hard.
+
 All features work in **English, Hindi and Punjabi**: interface, AI replies and scheme search. The AI also honours an explicit request in the message, such as "explain in Hindi".
 
 ## Generative AI used, and where
 
 - **Google Gemini 3.8 Flash via the official `@google/genai` SDK**, called only on the server through one shared helper, `lib/gemini.ts`.
-- Used by all five features. Gemini's vision capability reads uploaded document photos.
+- Used by all six AI features. Gemini vision reads uploaded document photos and earnings screenshots; screenshot extraction uses Gemini's JSON response mode.
 - Prompts for every feature live in `lib/prompts.ts`; the request lifecycle lives in `lib/askService.ts`.
 
 ## Architecture
@@ -54,7 +57,7 @@ lib/prompts.ts, gemini.ts Prompt building and the single Gemini client
 
 ## Why earnings are entered manually
 
-Gig platforms (Swiggy, Zomato, Uber, Rapido and others) offer no public API for workers' earnings, and scraping their apps would break their terms. Earnings are stored **only on the worker's phone** and are sent to the server only when the worker asks for an AI summary.
+Gig platforms (Swiggy, Zomato, Uber, Rapido and others) offer no public API for workers' earnings, and scraping their apps would break their terms. So GiggerIQ supports manual entry plus **screenshot import**: the worker shares their own screen and confirms what was read. Earnings are stored **only on the worker's phone** and are sent to the server only when the worker asks for an AI summary.
 
 ## Security
 
@@ -75,7 +78,7 @@ Gig platforms (Swiggy, Zomato, Uber, Rapido and others) offer no public API for 
 npm install
 cp .env.example .env   # add your GEMINI_API_KEY (REDIS_URL optional)
 npm run dev            # http://localhost:3000
-npm test               # 25 tests
+npm test               # 31 tests
 ```
 
 ## Deploy (Railway)
@@ -84,8 +87,9 @@ Connect the GitHub repo, add a Redis service, and set `GEMINI_API_KEY` and `REDI
 
 ## Tests
 
-25 Vitest tests:
+31 Vitest tests:
 
 - `tests/api.test.ts`: **integration tests for `POST /api/ask`** with Gemini simulated. Covers the happy path, cross-site and missing-origin rejection, malformed input, fake image bytes, verified scheme answers, rejection of invented citations, no AI call when nothing matches, cache hits, never caching personal text, per-IP rate limiting, fail-closed behaviour when the store is down, and the friendly error when Gemini fails.
 - `tests/core.test.ts`: earnings maths, tampered storage, validation, image signatures, citation verification.
+- `tests/scan.test.ts`: screenshot extraction parsing (rupee strings, invalid rows, runaway output), the scan API path requesting JSON from Gemini, and WhatsApp link encoding.
 - `tests/store.test.ts`: store expiry, and Hindi, Punjabi and whole-word scheme matching.

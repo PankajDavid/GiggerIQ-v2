@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { earningsListSchema } from "./earnings";
 
-export const MODES = ["complaint", "safety", "schemes", "document", "earnings"] as const;
+export const MODES = ["complaint", "safety", "schemes", "document", "earnings", "scan"] as const;
 export type Mode = (typeof MODES)[number];
 
 export const LANGS = ["en", "hi", "pa"] as const;
@@ -24,7 +24,7 @@ export const askSchema = z
     entries: earningsListSchema.optional(),
   })
   .superRefine((v, ctx) => {
-    if (v.mode === "document" && !v.image) {
+    if ((v.mode === "document" || v.mode === "scan") && !v.image) {
       ctx.addIssue({ code: "custom", message: "Image required" });
     }
     if (v.mode === "earnings" && (!v.entries || v.entries.length === 0)) {

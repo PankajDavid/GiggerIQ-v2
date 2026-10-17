@@ -4,9 +4,11 @@ import { buildPrompt } from "./prompts";
 import { generate } from "./gemini";
 import { reserveAiCall } from "./rateLimit";
 import { cacheKey, readCache, writeCache, type CachedReply } from "./cache";
+import { parseExtractedEntries } from "./scan";
+import type { Earning } from "./earnings";
 
 export type ServiceResult =
-  | { status: 200; body: CachedReply & { cached?: boolean } }
+  | { status: 200; body: CachedReply & { cached?: boolean; entries?: Earning[] } }
   | { status: 400 | 429 | 503; body: { error: string } };
 
 export const BUSY = "GiggerIQ is busy right now. Please try again in a minute.";
@@ -43,7 +45,13 @@ export async function handleAsk(input: AskInput): Promise<ServiceResult> {
 
   try {
     const { system, user } = buildPrompt(input, schemes);
-    const raw = await generate(system, user, input.mode === "document" ? input.image : undefined);
+    const usesImage = input.mode === "document" || input.mode === "scan";
+    const raw = await generate(system, user, usesImage ? input.image : undefined, { json: input.mode === "scan" });
+
+    if (input.mode === "scan") {
+      const entries = parseExtractedEntries(raw);
+      return { status: 200, body: { answer: "", sources: [], entries } };
+    }
 
     let reply: CachedReply = { answer: raw, sources: [] };
     if (input.mode === "schemes") {

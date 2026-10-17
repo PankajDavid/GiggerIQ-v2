@@ -60,3 +60,8 @@ fieldset.plain { border: 0; padding: 0; margin: 0; }
 label.inline { margin: 0; }
 .entries { list-style: none; padding: 0; margin: 12px 0 0; }
 .row.tight { margin-top: 0; }
+a.button {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 10px 16px; font-weight: 600;
+  border-radius: 8px; text-decoration: none; border: 1px solid var(--border); color: var(--text);
+}
+textarea + button { margin-top: 8px; }

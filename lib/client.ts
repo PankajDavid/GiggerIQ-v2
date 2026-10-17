@@ -4,6 +4,7 @@ export interface AskResult {
   answer?: string;
   error?: string;
   sources?: { name: string; link: string }[];
+  entries?: import("./earnings").Earning[];
 }
 
 export interface UploadImage {

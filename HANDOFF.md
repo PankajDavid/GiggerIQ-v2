@@ -9,5 +9,10 @@
 - Punjabi added; Hindi/Punjabi scheme keywords; whole-word English matching
 - 25 tests (13 API integration tests)
 
+## Done (submission 2)
+- Earnings screenshot import (Gemini JSON extraction, worker confirms)
+- Draft-my-reply from explained documents, WhatsApp share, read aloud, voice input
+- 31 tests
+
 ## Next
 - Deploy with Redis on Railway, test all features live
