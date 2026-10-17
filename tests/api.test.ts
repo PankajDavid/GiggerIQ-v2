@@ -12,13 +12,14 @@ const mockGenerate = vi.mocked(generate);
 const HOST = "giggeriq.test";
 let ipCounter = 0;
 
-function request(body: unknown, opts: { origin?: string | null; ip?: string } = {}) {
+function request(body: unknown, opts: { origin?: string | null; ip?: string; fetchSite?: string } = {}) {
   const headers: Record<string, string> = {
     "content-type": "application/json",
     host: HOST,
     "x-forwarded-for": opts.ip ?? `10.0.0.${++ipCounter}`,
   };
   if (opts.origin !== null) headers.origin = opts.origin ?? `https://${HOST}`;
+  if (opts.fetchSite) headers["sec-fetch-site"] = opts.fetchSite;
   return new NextRequest(`https://${HOST}/api/ask`, {
     method: "POST",
     headers,
@@ -40,15 +41,26 @@ describe("POST /api/ask", () => {
     expect(mockGenerate).toHaveBeenCalledOnce();
   });
 
-  it("rejects cross-site requests", async () => {
-    const res = await POST(request({ mode: "safety", lang: "en", text: "night rides" }, { origin: "https://evil.example" }));
+  it("rejects requests the browser marks as cross-site", async () => {
+    const res = await POST(
+      request({ mode: "safety", lang: "en", text: "night rides" }, { origin: "https://evil.example", fetchSite: "cross-site" }),
+    );
     expect(res.status).toBe(403);
     expect(mockGenerate).not.toHaveBeenCalled();
   });
 
-  it("rejects requests with no Origin header", async () => {
-    const res = await POST(request({ mode: "safety", lang: "en", text: "night rides" }, { origin: null }));
-    expect(res.status).toBe(403);
+  it("allows requests via proxies or test tools where Origin differs from Host", async () => {
+    mockGenerate.mockResolvedValue("1. Wear a helmet.");
+    const res = await POST(
+      request({ mode: "safety", lang: "en", text: "night rides" }, { origin: "https://preview.example", fetchSite: "same-origin" }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("allows requests with no Origin header (still rate-limited)", async () => {
+    mockGenerate.mockResolvedValue("1. Use reflective gear.");
+    const res = await POST(request({ mode: "safety", lang: "en", text: "rain rides" }, { origin: null }));
+    expect(res.status).toBe(200);
   });
 
   it("rejects malformed JSON and invalid input", async () => {

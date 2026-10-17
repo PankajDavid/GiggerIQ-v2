@@ -62,7 +62,7 @@ Gig platforms (Swiggy, Zomato, Uber, Rapido and others) offer no public API for 
 ## Security
 
 - Gemini API key is server-side only, read from environment variables; `.env` is git-ignored.
-- Same-origin check on the API; all input validated with `zod` (text max 1000 chars, fixed modes and languages).
+- Requests a browser marks as cross-site are refused (the API uses no cookies or logins, so there is no CSRF risk); all input validated with `zod` (text max 1000 chars, fixed modes and languages).
 - Rate limiting: 10 requests per minute per IP, plus a hard daily cap on Gemini calls. Both **fail closed**: if Redis is unreachable, requests are refused rather than allowing unlimited paid calls. The client IP is taken from the proxy-appended end of `X-Forwarded-For`, so clients can't spoof it.
 - Uploads: JPG, PNG or WebP only, max 4 MB, and the **actual file bytes** are checked, not just the declared type. Images are processed in memory and never stored or logged.
 - AI output is treated as untrusted and always rendered as plain text, never HTML. User and document text is passed to the model as data, never as instructions.

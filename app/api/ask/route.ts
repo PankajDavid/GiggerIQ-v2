@@ -9,14 +9,15 @@ function reply(body: object, status = 200) {
   return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 }
 
-function sameOrigin(req: NextRequest): boolean {
-  const origin = req.headers.get("origin");
-  if (!origin) return false;
-  try {
-    return new URL(origin).host === req.headers.get("host");
-  } catch {
-    return false;
-  }
+/**
+ * Block requests a browser marks as coming from another website.
+ * The API uses no cookies or logins, so there is no session to hijack (no CSRF risk);
+ * this only stops other sites from spending our AI quota through visitors' browsers.
+ * Requests through proxies, previews or test tools (where Origin and Host can differ) are allowed,
+ * and per-IP plus daily limits still apply to every request.
+ */
+function crossSiteBrowserRequest(req: NextRequest): boolean {
+  return req.headers.get("sec-fetch-site") === "cross-site";
 }
 
 /** The proxy appends the real client address last, so the rightmost entry can't be spoofed. */
@@ -26,7 +27,7 @@ function clientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
-  if (!sameOrigin(req)) return reply({ error: "Request not allowed." }, 403);
+  if (crossSiteBrowserRequest(req)) return reply({ error: "Request not allowed." }, 403);
 
   if ((await checkIpLimit(clientIp(req))) !== "ok") return reply({ error: BUSY }, 429);
 
